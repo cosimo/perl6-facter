@@ -16,6 +16,13 @@ method load($fact) {
     # TODO: would be cool to also run the ".rb" facts
     my $filename = $shortname ~ ".pm";
 
+    eval "require 'Facter/$filename'" or do {
+        warn "Unable to load fact $shortname: $!";
+        return;
+    };
+
+    return;
+
     for self.search_path -> $dir {
         # Load individual files
         my $file = join('/', $dir, $filename);
@@ -53,9 +60,9 @@ method load_all () {
 }
 
 # The list of directories we're going to search through for facts.
-method search_path () {
+method search_path {
 
-    my @result = map {"$_/facter"}, @*INC;
+    my @result = map {"$_/Facter"}, @*INC;
 
     my $facter_lib = $*ENV<FACTERLIB>;
     if $facter_lib.defined {
@@ -63,7 +70,7 @@ method search_path () {
     }
 
     # This allows others to register additional paths we should search.
-    @result.push(Facter.search_path);
+    @result.push(Facter.new.search_path);
 
     return @result;
 }
@@ -84,7 +91,8 @@ method load_dir($dir) {
 }
 
 method load_file($file) {
-    eval($file) or do {
+    say "require '$file'";
+    eval("require '$file'") or do {
         warn "Error loading fact $file: $!\n";
         return False;
     };
@@ -93,7 +101,10 @@ method load_file($file) {
 
 # Load facts from the environment.  If no name is provided,
 # all will be loaded.
-method load_env($fact = Mu) {
+method load_env($fact = "") {
+
+    # TODO Iterate over %*ENV not possible?
+    return;
 
     # Load from the environment, if possible
     for %*ENV.kv -> $name, $value {

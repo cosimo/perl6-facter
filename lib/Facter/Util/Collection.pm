@@ -8,7 +8,7 @@ use Facter::Util::Loader;
 
 # Private members
 has %!facts is rw;
-
+has $!loader is rw;
 
 # Return a fact object by name.  If you use this, you still have to call
 # 'value' on it to retrieve the actual value.
@@ -69,9 +69,9 @@ method each () {
 
 # Return a fact by name.
 method fact($name) {
-    $name = self.canonize($name);
-    self.loader.load($name) unless %!facts{name};
-    return %!facts{$name};
+    my $fact_name = self.canonize($name);
+    self.loader.load($fact_name) unless %!facts{$fact_name};
+    return %!facts{$fact_name};
 }
 
 # Flush all cached values.
@@ -97,9 +97,7 @@ method load_all {
 
 # The thing that loads facts if we don't have them.
 method loader {
-    unless defined $!loader {
-        $!loader = Facter::Util::Loader.new
-    }
+    $!loader //= Facter::Util::Loader.new;
     return $!loader;
 }
 

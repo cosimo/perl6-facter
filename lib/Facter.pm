@@ -35,19 +35,15 @@ our $VERSION = '0.02';
 # TODO: RT#77906
 #%*ENV<LANG> = 'C';
 
-# Public members
-has @!search_path is rw = ();
 
 # Private members
-has @!collection is rw;
+has $!collection is rw;
 has $!debug is rw = 0;
 has $!timing is rw = 0;
+has @!search_path is rw = ();
 
 method collection {
-    unless defined @!collection {
-        @!collection = Facter::Util::Collection.new
-    }
-    return @!collection;
+    $!collection //= Facter::Util::Collection.new
 }
 
 method version () {
@@ -104,33 +100,28 @@ method get_fact($name) {
     self.collection.fact($name);
 }
 
-=begin ruby
-    class << self
-        [:fact, :flush, :list, :value].each do |method|
-            define_method(method) do |*args|
-                collection.send(method, *args)
-            end
-        end
-
-        [:list, :to_hash].each do |method|
-            define_method(method) do |*args|
-                collection.load_all
-                collection.send(method, *args)
-            end
-        end
-    end
-=end ruby
-
-for 'fact', 'flush', 'value' -> $name {
-    Facter.^add_method($name, method (*@args) {
-        self.collection.^can($name).(@args);
-    });
+method fact(*@args) {
+    self.collection.fact(@args);
 }
+
+method flush(*@args) {
+    self.collection.flush(@args);
+}
+
+method value(*@args) {
+    self.collection.value(@args);
+}
+
+#for 'fact', 'flush', 'value' -> $name {
+#    Facter.^add_method($name, method (*@args) {
+#        self.collection.$name.(@args);
+#    });
+#}
 
 for 'list', 'to_hash' -> $name {
     Facter.^add_method($name, method (*@args) {
         self.collection.load_all();
-        self.collection.^can($name, @args);
+        self.collection.$name.(@args);
     });
 }
 
@@ -140,17 +131,17 @@ method add ($name, %options = (), &block) {
     self.collection.add($name, %options, &block)
 }
 
-method each () {
+method each {
     self.collection.load_all();
-    for self.collection.each -> $fact {
-        yield($fact)
+    gather for self.collection -> $fact {
+        take $fact;
     }
 }
 
 # Clear all facts.  Mostly used for testing.
-method clear () {
-    self.flush();
-    self.reset();
+method clear {
+    self.flush;
+    self.reset;
     return;
 }
 
@@ -163,22 +154,22 @@ method warn ($msg) {
     }
 }
 
-method reset () {
+method reset {
     @!collection = ();
 }
 
 # Load all of the default facts, and then everything from disk.
-method loadfacts () {
+method loadfacts {
     self.collection.load_all();
 }
 
 # Register a directory to search through.
-method search(*@dirs) {
+method search(@dirs) {
     @!search_path.push(@dirs);
 }
 
 # Return our registered search directories.
-method search_path () {
+method search_path {
     return @!search_path;
 }
 
