@@ -24,15 +24,15 @@
 #--
 
 use v6;
-#use Facter::Util::Fact;
-use Facter::Util::Collection;
+#se Facter::Util::Fact;
+#se Facter::Util::Collection;
 
 class Facter:auth<cosimo>:ver<0.01>;
 
 our $VERSION = '0.01';
 
 # TODO When outputting something
-#$*ENV<LANG> = 'C';
+%*ENV<LANG> = 'C';
 
 # Private members
 has @!collection is rw;

@@ -1,100 +1,116 @@
+# Load facts on demand
+
 use v6;
 
-# Load facts on demand.
-class Facter::Util::Loader
-    # Load all resolutions for a single fact.
-    def load(fact)
-        # Now load from the search path
-        shortname = fact.to_s.downcase
-        load_env(shortname)
+class Facter::Util::Loader;
 
-        filename = shortname + ".rb"
-        search_path.each do |dir|
-            # Load individual files
-            file = File.join(dir, filename)
+has $!loaded_all is rw = False;
 
-            load_file(file) if FileTest.exist?(file)
+# Load all resolutions for a single fact.
+method load($fact) {
 
-            # And load any directories matching the name
-            factdir = File.join(dir, shortname)
-            load_dir(factdir) if FileTest.directory?(factdir)
-        end
-    end
+    # Now load from the search path
+    my $shortname = $fact.Str.lc;
+    self.load_env($shortname);
 
-    # Load all facts from all directories.
-    def load_all
-        return if defined?(@loaded_all)
+    # TODO: would be cool to also run the ".rb" facts
+    my $filename = $shortname ~ ".pm";
 
-        load_env
+    for self.search_path -> $dir {
+        # Load individual files
+        my $file = join('/', $dir, $filename);
 
-        search_path.each do |dir|
-            next unless FileTest.directory?(dir)
+        self.load_file($file) if $file.IO ~~ :e;   # exists
 
-            Dir.entries(dir).each do |file|
-                path = File.join(dir, file)
-                if File.directory?(path)
-                    load_dir(path)
-                elsif file =~ /\.rb$/
-                    load_file(File.join(dir, file))
-                end
-            end
-        end
+        # And load any directories matching the name
+        my $factdir = join('/', $dir, $shortname);
+        self.load_dir($factdir) if $factdir.IO ~~ :d;
+    }
 
-        @loaded_all = true
-    end
+}
 
-    # The list of directories we're going to search through for facts.
-    def search_path
-        result = []
-        result += $LOAD_PATH.collect { |d| File.join(d, "facter") }
-        if ENV.include?("FACTERLIB")
-            result += ENV["FACTERLIB"].split(":")
-        end
+# Load all facts from all directories.
+method load_all () {
+    return if defined $!loaded_all;
 
-        # This allows others to register additional paths we should search.
-        result += Facter.search_path
+    self.load_env();
 
-        result
-    end
+    for self.search_path -> $dir {
 
-    private
+        next unless $dir.IO ~~ :d;
 
-    def load_dir(dir)
-        return if dir =~ /\/\.+$/ or dir =~ /\/util$/ or dir =~ /\/lib$/
+        for dir($dir) -> $file {
+            my $path = join('/', $dir, $file);
+            if $path.IO ~~ :d {
+                self.load_dir($path);
+            } elsif $file ~~ /\.pm$/ {
+                self.load_file($path);
+            }
+        }
+    }
 
-        Dir.entries(dir).find_all { |f| f =~ /\.rb$/ }.each do |file|
-            load_file(File.join(dir, file))
-        end
-    end
+    $!loaded_all = True;
+}
 
-    def load_file(file)
-        # We have to specify Kernel.load, because we have a load method.
-        begin
-            Kernel.load(file)
-        rescue ScriptError => detail
-            warn "Error loading fact #{file} #{detail}"
-        end
-    end
+# The list of directories we're going to search through for facts.
+method search_path () {
 
-    # Load facts from the environment.  If no name is provided,
-    # all will be loaded.
-    def load_env(fact = nil)
-        # Load from the environment, if possible
-        ENV.each do |name, value|
-            # Skip anything that doesn't match our regex.
-            next unless name =~ /^facter_?(\w+)$/i
-            env_name = $1
+    my @result = map {"$_/facter"}, @*INC;
 
-            # If a fact name was specified, skip anything that doesn't
-            # match it.
-            next if fact and env_name != fact
+    my $facter_lib = $*ENV<FACTERLIB>;
+    if $facter_lib.defined {
+        @result.push($facter_lib.split(":"));
+    }
 
-            Facter.add($1) do
-                setcode { value }
-            end
+    # This allows others to register additional paths we should search.
+    @result.push(Facter.search_path);
 
-            # Short-cut, if we are only looking for one value.
-            break if fact
-        end
-    end
-end
+    return @result;
+}
+
+#private
+
+method load_dir($dir) {
+
+    return if $dir ~~ /\/\.+$/
+        or $dir ~~ /\/util$/
+        or $dir ~~ /\/lib$/;
+
+    for dir($dir) -> $f {
+        next unless $f ~~ /\.pm$/;
+        self.load_file(join('/', $dir, $f));
+    }
+
+}
+
+method load_file($file) {
+    eval($file) or do {
+        warn "Error loading fact $file: $!\n";
+        return False;
+    };
+    return True;
+}
+
+# Load facts from the environment.  If no name is provided,
+# all will be loaded.
+method load_env($fact = Mu) {
+
+    # Load from the environment, if possible
+    for %*ENV.kv -> $name, $value {
+
+        # Skip anything that doesn't match our regex.
+        next unless $name ~~ m:i/^facter_?(\w+)$/;
+        my $env_name = $0;
+
+        # If a fact name was specified,
+        # skip anything that doesn't match it.
+        next if $fact and $env_name != $fact;
+
+        Facter.add($env_name, $value);
+
+        # Short-cut, if we are only looking for one value.
+        last if $fact;
+    }
+
+}
+
