@@ -58,10 +58,11 @@ method add($name, %options = (), Sub $block) {
 
 # Iterate across all of the facts.
 method each () {
-    for %!facts.kv -> $name, $fact {
+    # XXX Can this even work??
+    gather for %!facts.kv -> $name, $fact {
         my $value = $fact.value;
         if $value.defined {
-            yield($name.Str, $value);
+            take($name.Str, $value);
         }
     }
 }
