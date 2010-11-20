@@ -24,21 +24,24 @@
 #--
 
 use v6;
+
+class Facter;
+
 #se Facter::Util::Fact;
-#se Facter::Util::Collection;
+use Facter::Util::Collection;
 
-class Facter:auth<cosimo>:ver<0.01>;
-
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # TODO When outputting something
 %*ENV<LANG> = 'C';
+
+# Public members
+has @.search_path is rw = ();
 
 # Private members
 has @!collection is rw;
 has $!debug is rw = 0;
 has $!timing is rw = 0;
-has @!search_path is rw = ();
 
 method collection {
     unless defined @!collection {

@@ -1,135 +1,130 @@
-use Facter;
-use Facter::Util::Fact;
-use Facter::Util::Loader;
-
 # Manage which facts exist and how we access them.  Largely just a wrapper
 # around a hash of facts.
 class Facter::Util::Collection;
 
+#se Facter;
+#se Facter::Util::Fact;
+use Facter::Util::Loader;
+
+# Private members
+has %!facts is rw;
+
+
 # Return a fact object by name.  If you use this, you still have to call
 # 'value' on it to retrieve the actual value.
 method get($name) {
-    return self.value($name);
+    return $.value($name);
 }
-
-=begin ruby
 
 # Add a resolution mechanism for a named fact.  This does not distinguish
 # between adding a new fact and adding a new way to resolve a fact.
-def add(name, options = {}, &block)
-    name = canonize(name)
+method add($name, %options = (), Sub $block) {
+    $name = $.canonize($name);
 
-    unless fact = @facts[name]
-        fact = Facter::Util::Fact.new(name)
-
-        @facts[name] = fact
-    end
+    my $fact = %!facts{$name};
+    unless $fact {
+        $fact = Facter::Util::Fact.new($name);
+        %!facts{$name} = $fact;
+    }
 
     # Set any fact-appropriate options.
-    options.each do |opt, value|
-        method = opt.to_s + "="
-        if fact.respond_to?(method)
-            fact.send(method, value)
-            options.delete(opt)
-        end
-    end
+    for %options.kv -> $opt, $value {
+        my $method = $opt.Str;   # + "=" is a ruby fancyness
+        if $fact.^can($method) {
+            $fact.$method($value);
+            %options{$opt}.delete;
+        }
+    }
 
-    if block
-        resolve = fact.add(&block)
+    if $block {
+        my $resolve = $fact.add($block);
+
         # Set any resolve-appropriate options
-        options.each do |opt, value|
-            method = opt.to_s + "="
-            if resolve.respond_to?(method)
-                resolve.send(method, value)
-                options.delete(opt)
-            end
-        end
-    end
+        for %options.kv -> $opt, $value {
+            my $method = $opt.Str;  # again, + "="
+            if $resolve.^can($method) {
+                $resolve.$method($value);
+                %options{$opt}.delete;
+            }
+        }
+    }
 
-    unless options.empty?
-        raise ArgumentError, "Invalid facter option(s) %s" % options.keys.collect { |k| k.to_s }.join(",")
-    end
+    if %options.keys {
+        die "Invalid facter option(s) " ~ %options.keys ==> map { $_.Str } ==> join(",");
+    }
 
-    return fact
-end
-
-include Enumerable
+    return $fact;
+}
 
 # Iterate across all of the facts.
-def each
-    @facts.each do |name, fact|
-        value = fact.value
-        unless value.nil?
-            yield name.to_s, value
-        end
-    end
-end
+method each () {
+    for %!facts.kv -> $name, $fact {
+        my $value = $fact.value;
+        if $value.defined {
+            yield($name.Str, $value);
+        }
+    }
+}
 
 # Return a fact by name.
-def fact(name)
-    name = canonize(name)
-
-    loader.load(name) unless @facts[name]
-
-    return @facts[name]
-end
+method fact($name) {
+    $name = self.canonize($name);
+    self.loader.load($name) unless %!facts{name};
+    return %!facts{$name};
+}
 
 # Flush all cached values.
-def flush
-    @facts.each { |name, fact| fact.flush }
-end
+method flush {
+    for %!facts.values -> $fact {
+        $fact.flush if $fact;
+    }
+}
 
-def initialize
-    @facts = Hash.new
-end
+method initialize {
+    %!facts = ();
+}
 
 # Return a list of all of the facts.
-def list
-    return @facts.keys
-end
-
-=end ruby
+method list {
+    return %!facts.keys
+}
 
 # Load all known facts.
-method load_all () {
-    self.loader.load_all();
+method load_all {
+    self.loader.load_all
 }
 
 # The thing that loads facts if we don't have them.
-method loader () {
+method loader {
     unless defined $!loader {
         $!loader = Facter::Util::Loader.new
     }
     return $!loader;
 }
 
-=begin ruby
-
 # Return a hash of all of our facts.
-def to_hash
-    @facts.inject({}) do |h, ary|
-        value = ary[1].value
-        if ! value.nil?
-            # For backwards compatibility, convert the fact name to a string.
-            h[ary[0].to_s] = value
-        end
-        h
-    end
-end
+method to_hash {
+    my %result;
 
-def value(name)
-    if fact = fact(name)
-        fact.value
-    end
-end
+    for %!facts.kv -> $name, $fact {
+        my $value = $fact.value;
+        if $value.defined {
+            %result{$name.Str} = $value;
+        }
+    }
 
-private
+    return %result;
+}
+
+method value($name) {
+    if my $fact = self.fact($name) {
+        return $fact.value
+    }
+}
 
 # Provide a consistent means of getting the exact same fact name
 # every time.
-def canonize(name)
-    name.to_s.downcase.to_sym
-end
-
-=end ruby
+method canonize($name) {
+    $name.Str.lc;  # TODO: lookup to_sym ??
+}
 
