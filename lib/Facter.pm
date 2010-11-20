@@ -27,16 +27,16 @@ use v6;
 
 class Facter;
 
-#se Facter::Util::Fact;
+use Facter::Util::Fact;
 use Facter::Util::Collection;
 
 our $VERSION = '0.02';
 
-# TODO When outputting something
-%*ENV<LANG> = 'C';
+# TODO: RT#77906
+#%*ENV<LANG> = 'C';
 
 # Public members
-has @.search_path is rw = ();
+has @!search_path is rw = ();
 
 # Private members
 has @!collection is rw;
