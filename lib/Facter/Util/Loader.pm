@@ -15,13 +15,14 @@ method load($fact) {
 
     # TODO: would be cool to also run the ".rb" facts
     my $filename = $shortname ~ ".pm";
+    my $module = "Facter::$shortname";
+    require $module;
+    # or do {
+    #    warn "Unable to load fact $shortname: $!";
+    #    return False;
+    #};
 
-    eval "require 'Facter/$filename'" or do {
-        warn "Unable to load fact $shortname: $!";
-        return;
-    };
-
-    return;
+    return True;
 
     for self.search_path -> $dir {
         # Load individual files
