@@ -31,6 +31,7 @@ use Facter::Util::Fact;
 use Facter::Util::Collection;
 
 our $VERSION = '0.02';
+our $LAST_OBJECT;
 
 # TODO: RT#77906
 #%*ENV<LANG> = 'C';
@@ -48,6 +49,10 @@ method collection {
 
 method version () {
     return $VERSION
+}
+
+method BUILD {
+    $LAST_OBJECT = self;
 }
 
 multi method debugging () {
@@ -108,7 +113,7 @@ method flush(*@args) {
     self.collection.flush(@args);
 }
 
-method value(*@args) {
+method value (*@args) {
     self.collection.value(@args);
 }
 
@@ -118,17 +123,35 @@ method value(*@args) {
 #    });
 #}
 
-for 'list', 'to_hash' -> $name {
-    Facter.^add_method($name, method (*@args) {
-        self.collection.load_all();
-        self.collection.$name.(@args);
-    });
+#for 'list', 'to_hash' -> $name {
+#    Facter.^add_method($name, method (*@args) {
+#        self.collection.load_all();
+#        self.collection.$name.(@args);
+#    });
+#}
+
+method list (*@args) {
+    self.collection.load_all();
+    self.collection.list(@args);
+}
+
+method to_hash (*@args) {
+    self.collection.load_all();
+    self.collection.to_hash(@args);
 }
 
 # Add a resolution mechanism for a named fact.  This does not distinguish
 # between adding a new fact and adding a new way to resolve a fact.
-method add ($name, %options = (), &block) {
-    self.collection.add($name, %options, &block)
+method add ($name, Sub $block) {
+    # TODO add %options support
+    #multi method add ($name, %options = (), $block) {
+    my $instance = self // Facter.get_instance;
+    $instance.collection.add($name, $block);
+}
+
+method get_instance {
+    if self { return self }
+    $LAST_OBJECT //= Facter.new;
 }
 
 method each {
@@ -155,7 +178,7 @@ method warn ($msg) {
 }
 
 method reset {
-    @!collection = ();
+    $!collection = ();
 }
 
 # Load all of the default facts, and then everything from disk.

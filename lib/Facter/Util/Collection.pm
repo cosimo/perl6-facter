@@ -18,8 +18,12 @@ method get($name) {
 
 # Add a resolution mechanism for a named fact.  This does not distinguish
 # between adding a new fact and adding a new way to resolve a fact.
-method add($name, %options = (), Sub $block) {
-    $name = $.canonize($name);
+method add($fact_name, Sub $block) {
+
+    # TODO add %options support
+    my %options = ();
+
+    my $name = self.canonize($fact_name);
 
     my $fact = %!facts{$name};
     unless $fact {
