@@ -1,14 +1,26 @@
-# An actual fact resolution mechanism.  These are largely just chunks of
-# code, with optional confinements restricting the mechanisms to only working on
-# specific systems.  Note that the confinements are always ANDed, so any
-# confinements specified must all be true for the resolution to be
-# suitable.
-require 'facter/util/confine'
+=begin pod
 
-require 'timeout'
-require 'rbconfig'
+=head1 NAME
 
-class Facter::Util::Resolution
+Facter::Util::Resolution
+
+=head1 DESCRIPTION
+
+An actual fact resolution mechanism.  These are largely just chunks of
+code, with optional confinements restricting the mechanisms to only working on
+specific systems.  Note that the confinements are always ANDed, so any
+confinements specified must all be true for the resolution to be
+suitable.
+
+=end pod
+
+class Facter::Util::Resolution;
+
+use Facter::Util::Confine;
+
+#require 'timeout'
+#require 'rbconfig'
+
     attr_accessor :interpreter, :code, :name, :timeout
 
     WINDOWS = Config::CONFIG['host_os'] =~ /mswin|win32|dos|mingw|cygwin/i
