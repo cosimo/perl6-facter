@@ -11,7 +11,7 @@ ok(@search_dirs.elems == 0, "Search path list is empty at startup");
 my $coll = $facter.collection;
 ok($coll, "Collection object is there");
 
-my $test-fact = 'os';
+my $test-fact = 'perl6os';
 
 my $lsbdistname = $facter.fact($test-fact);
 ok($lsbdistname, "fact '$test-fact' is loaded");
