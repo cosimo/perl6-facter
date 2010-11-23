@@ -16,11 +16,13 @@ method load($fact) {
     # TODO: would be cool to also run the ".rb" facts
     my $filename = $shortname ~ ".pm";
     my $module = "Facter::$shortname";
-    require $module;
-    # or do {
-    #    warn "Unable to load fact $shortname: $!";
-    #    return False;
-    #};
+    try {
+        require $module;
+        CATCH {
+            warn "Unable to load fact $shortname: $!";
+            return False;
+        }
+    }
 
     return True;
 
