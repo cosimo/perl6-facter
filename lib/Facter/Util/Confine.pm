@@ -27,7 +27,7 @@ method initialize($fact, *@values) {
     @.values = @values;
 }
 
-method to_s {    # XXX Str ?
+method Str {   # ruby: to_s
     my $fact = $.fact;
     my $values = @.values.join(',');
     return "'$fact' '$values'";
