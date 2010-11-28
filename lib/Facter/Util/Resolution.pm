@@ -21,161 +21,181 @@ use Facter::Util::Confine;
 #require 'timeout'
 #require 'rbconfig'
 
-    attr_accessor :interpreter, :code, :name, :timeout
+has $.code is rw;
+has $.interpreter is rw;
+has $.name is rw;
+has $.value is rw;
+has $.timeout is rw;
+has @.confines is rw;
 
-    WINDOWS = Config::CONFIG['host_os'] =~ /mswin|win32|dos|mingw|cygwin/i
+our $WINDOWS = $*OS ~~ m:i/mswin|win32|dos|mingw|cygwin/;
+our $INTERPRETER = $WINDOWS ?? 'cmd.exe' :: '/bin/sh'
+our $HAVE_WHICH;
 
-    INTERPRETER = WINDOWS ? 'cmd.exe' : '/bin/sh'
+method have_which {
+    if ! $HAVE_WHICH.defined {
+        if Facter.value('kernel') == 'windows' {
+            $HAVE_WHICH = False
+        } else {
+            $HAVE_WHICH = run('which which >/dev/null 2>&1') == 0;
+        }
+    }
+    return $HAVE_WHICH;
+}
 
-    def self.have_which
-        if ! defined?(@have_which) or @have_which.nil?
-            if Facter.value(:kernel) == 'windows'
-                @have_which = false
-            else
-                %x{which which >/dev/null 2>&1}
-                @have_which = ($? == 0)
-            end
-        end
-        @have_which
-    end
+# Execute a program and return the output of that program.
+#
+# Returns nil if the program can't be found, or if there is a problem
+# executing the code.
+#
+method exec($code, $interpreter = $INTERPRETER) {
 
-    # Execute a program and return the output of that program.
+    unless $interpreter == $INTERPRETER {
+        die "invalid interpreter";
+    }
+
+    # Try to guess whether the specified code can be executed by looking at the
+    # first word. If it cannot be found on the PATH defer on resolving the fact
+    # by returning nil.
+    # This only fails on shell built-ins, most of which are masked by stuff in 
+    # /bin or of dubious value anyways. In the worst case, "sh -c 'builtin'" can
+    # be used to work around this limitation
     #
-    # Returns nil if the program can't be found, or if there is a problem
-    # executing the code.
-    #
-    def self.exec(code, interpreter = INTERPRETER)
-        raise ArgumentError, "invalid interpreter" unless interpreter == INTERPRETER
+    # Windows' %x{} throws Errno::ENOENT when the command is not found, so we 
+    # can skip the check there. This is good, since builtins cannot be found 
+    # elsewhere.
+    if $HAVE_WHICH and !$WINDOWS {
+        my $path = Mu;
+        my $binary = $.code.split.[0];
+        if $.code ~~ /^\// {
+            $path = $binary
+        } else {
+            $path = qx{which '$binary' 2>/dev/null}.chomp;
+            # we don't have the binary necessary
+            return if $path eq "" or $path.match(/Command not found\./);
+        }
 
-        # Try to guess whether the specified code can be executed by looking at the
-        # first word. If it cannot be found on the PATH defer on resolving the fact
-        # by returning nil.
-        # This only fails on shell built-ins, most of which are masked by stuff in 
-        # /bin or of dubious value anyways. In the worst case, "sh -c 'builtin'" can
-        # be used to work around this limitation
-        #
-        # Windows' %x{} throws Errno::ENOENT when the command is not found, so we 
-        # can skip the check there. This is good, since builtins cannot be found 
-        # elsewhere.
-        if have_which and !WINDOWS
-            path = nil
-            binary = code.split.first
-            if code =~ /^\//
-                path = binary
+        return unless $path.IO ~~ :e;
+    }
+
+    my $out;
+
+    try {
+        $out = qx{$code}.chomp;
+    } CATCH {
+        warn "Command failed: $!";
+        return;
+    }
+
+    if $out == "" {
+        return
+    }
+
+    return $out;
+}
+
+# Add a new confine to the resolution mechanism.
+method confine(%confines) {
+    for %confines.kv -> $fact, $values {
+        @.confines.push(Facter::Util::Confine.new($fact, $values);
+    }
+}
+
+# Create a new resolution mechanism.
+method initialize($name) {
+    $.name = $name;
+    @.confines = ();
+    $.value = Mu;
+    $.timeout = 0;
+    return;
+}
+
+# Return the number of confines.
+method length {
+    @.confines.elems;
+}
+
+# We need this as a getter for 'timeout', because some versions
+# of ruby seem to already have a 'timeout' method and we can't
+# seem to override the instance methods, somehow.
+method limit {
+    $.timeout
+}
+
+# Set our code for returning a value.
+method setcode($string = Mu, $interp = Mu, Sub $block)
+    if $string {
+        $.code = $string;
+        $.interpreter = $interp || $INTERPRETER;
+    } elsif $block {
+        $.code = $block
+    } else {
+        die "You must pass either code or a block"
+    }
+}
+
+# Is this resolution mechanism suitable on the system in question?
+method suitable
+    unless defined $.suitable {
+        $.suitable = ! any(@confines, False);
+    }
+    return $.suitable;
+}
+
+method Str {
+    return self.value()
+}
+
+# How we get a value for our resolution mechanism.
+method value {
+
+    if ! $.code and ! $.interpreter {
+        return;
+    }
+
+    my $result;
+    my $starttime = time;
+
+=begin ruby
+    begin
+        Timeout.timeout(limit) do
+            if @code.is_a?(Proc)
+                result = @code.call()
             else
-                path = %x{which #{binary} 2>/dev/null}.chomp
-                # we don't have the binary necessary
-                return nil if path == "" or path.match(/Command not found\./)
-            end
+                result = Facter::Util::Resolution.exec(@code,@interpreter)
+            }
+        }
+    rescue Timeout::Error => detail
+        warn "Timed out seeking value for %s" % self.name
 
-            return nil unless FileTest.exists?(path)
-        end
+        # This call avoids zombies -- basically, create a thread that will
+        # dezombify all of the child processes that we're ignoring because
+        # of the timeout.
+        Thread.new { Process.waitall }
+        return nil
+    rescue => details
+        warn "Could not retrieve %s: %s" % [self.name, details]
+        return nil
+    }
+=end ruby
 
-        out = nil
+    try {
+        if "Sub()" eq $.code.WHAT {
+            $result = $.code();
+        } else {
+            $result = Facter::Util::Resolution.exec($.code, $.interpreter);
+        }
+    }
+    CATCH {
+        warn "Could not retrieve $.name: $!";
+        return
+    }
 
-        begin
-            out = %x{#{code}}.chomp
-        rescue Errno::ENOENT => detail
-            # command not found on Windows
-            return nil
-        rescue => detail
-            $stderr.puts detail
-            return nil
-        end
+    my $finishtime = time;
+    my $ms = ($finishtime - $starttime) * 1000;
+    Facter.show_time("$.name: $ms ms");
 
-        if out == ""
-            return nil
-        else
-            return out
-        end
-    end
+    return if $result eq "";
+    return $result;
+}
 
-    # Add a new confine to the resolution mechanism.
-    def confine(confines)
-        confines.each do |fact, values|
-            @confines.push Facter::Util::Confine.new(fact, *values)
-        end
-    end
-
-    # Create a new resolution mechanism.
-    def initialize(name)
-        @name = name
-        @confines = []
-        @value = nil
-        @timeout = 0
-    end
-
-    # Return the number of confines.
-    def length
-        @confines.length
-    end
-
-    # We need this as a getter for 'timeout', because some versions
-    # of ruby seem to already have a 'timeout' method and we can't
-    # seem to override the instance methods, somehow.
-    def limit
-        @timeout
-    end
-
-    # Set our code for returning a value.
-    def setcode(string = nil, interp = nil, &block)
-        if string
-            @code = string
-            @interpreter = interp || INTERPRETER
-        else
-            unless block_given?
-                raise ArgumentError, "You must pass either code or a block"
-            end
-            @code = block
-        end
-    end
-
-    # Is this resolution mechanism suitable on the system in question?
-    def suitable?
-        unless defined? @suitable
-            @suitable = ! @confines.detect { |confine| ! confine.true? }
-        end
-
-        return @suitable
-    end
-
-    def to_s
-        return self.value()
-    end
-
-    # How we get a value for our resolution mechanism.
-    def value
-        result = nil
-        return result if @code == nil and @interpreter == nil
-
-        starttime = Time.now.to_f
-
-        begin
-            Timeout.timeout(limit) do
-                if @code.is_a?(Proc)
-                    result = @code.call()
-                else
-                    result = Facter::Util::Resolution.exec(@code,@interpreter)
-                end
-            end
-        rescue Timeout::Error => detail
-            warn "Timed out seeking value for %s" % self.name
-
-            # This call avoids zombies -- basically, create a thread that will
-            # dezombify all of the child processes that we're ignoring because
-            # of the timeout.
-            Thread.new { Process.waitall }
-            return nil
-        rescue => details
-            warn "Could not retrieve %s: %s" % [self.name, details]
-            return nil
-        end
-
-        finishtime = Time.now.to_f
-        ms = (finishtime - starttime) * 1000
-        Facter.show_time "#{self.name}: #{"%.2f" % ms}ms"
-
-        return nil if result == ""
-        return result
-    end
-end
