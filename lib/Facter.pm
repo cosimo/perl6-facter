@@ -36,11 +36,12 @@ our $LAST_OBJECT;
 # TODO: RT#77906
 #%*ENV<LANG> = 'C';
 
+# Static variables (@@debug)
+our $debug = 1;
+our $timing = 0;
 
 # Private members
 has $!collection is rw;
-has $!debug is rw = 1;
-has $!timing is rw = 0;
 has @!search_path is rw = ();
 
 method collection {
@@ -55,17 +56,17 @@ method BUILD {
     $LAST_OBJECT = self;
 }
 
-multi method debugging () {
-    return $!debug != 0
+multi method debugging {
+    return $debug != 0
 }
 
 # Set debugging on or off (1/0)
 multi method debugging($bit) {
     if $bit {
-        $!debug = 1;
+        $debug = 1;
     }
     else {
-        $!debug = 0;
+        $debug = 0;
     }
 }
 
@@ -73,8 +74,8 @@ method debug($string) {
     if ! defined $string {
         return
     }
-    if self.debugging() {
-        warn $string ~ "\n"
+    if self.debugging {
+        say $string ~ "\n"
     }
     return;
 }
@@ -86,16 +87,16 @@ method show_time($string) {
     return;
 }
 
-multi method timing () {
-    return $!timing != 0;
+multi method timing {
+    return $timing != 0;
 }
 
 # Set timing on or off.
 multi method timing($bit) {
     if $bit {
-        $!timing = 1;
+        $timing = 1;
     } else {
-        $!timing = 0;
+        $timing = 0;
     }
 }
 
