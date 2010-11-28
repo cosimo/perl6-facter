@@ -18,10 +18,10 @@ method load($fact) {
     my $module = "Facter::$shortname";
     try {
         require $module;
-        CATCH {
-            warn "Unable to load fact $shortname: $!";
-            return False;
-        }
+    }
+    CATCH {
+        warn "Unable to load fact $shortname: $!";
+        return False;
     }
 
     return True;

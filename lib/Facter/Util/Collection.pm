@@ -23,11 +23,15 @@ method add($fact_name, Sub $block) {
     # TODO add %options support
     my %options = ();
 
+    Facter.debug("collection.add $fact_name: " ~ $block.perl);
+
     my $name = self.canonize($fact_name);
 
     my $fact = %!facts{$name};
     unless $fact {
-        $fact = Facter::Util::Fact.new($name);
+        Facter.debug("new Fact '$name'");
+        $fact = Facter::Util::Fact.new(name => $name);
+        Facter.debug("new Fact '$name' created: " ~ $fact.perl);
         %!facts{$name} = $fact;
     }
 
@@ -41,6 +45,8 @@ method add($fact_name, Sub $block) {
     }
 
     if $block {
+
+        Facter.debug("Fact " ~ $fact ~ " adding block " ~ $block.perl);
         my $resolve = $fact.add($block);
 
         # Set any resolve-appropriate options
@@ -74,7 +80,13 @@ method each () {
 # Return a fact by name.
 method fact($name) {
     my $fact_name = self.canonize($name);
-    self.loader.load($fact_name) unless %!facts{$fact_name};
+    Facter.debug("self.canonize($name) = $fact_name");
+
+    unless %!facts{$fact_name} {
+        Facter.debug("Loading fact $fact_name through loader");
+        self.loader.load($fact_name);
+    }
+
     return %!facts{$fact_name};
 }
 

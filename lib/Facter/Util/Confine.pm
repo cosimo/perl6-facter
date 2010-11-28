@@ -1,15 +1,9 @@
-=begin pod
-
-=head1 NAME
-
-Facter::Util::Confine
-
-=head1 DESCRIPTION
-
-A restricting tag for fact resolution mechanisms.  The tag must be true
-for the resolution mechanism to be suitable.
-
-=end pod
+#
+# Facter::Util::Confine
+#
+# A restricting tag for fact resolution mechanisms.  The tag must be true
+# for the resolution mechanism to be suitable.
+#
 
 class Facter::Util::Confine;
 

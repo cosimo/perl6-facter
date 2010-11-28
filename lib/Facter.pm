@@ -48,8 +48,8 @@ method collection {
     $!collection //= Facter::Util::Collection.new
 }
 
-method version () {
-    return $VERSION
+method version {
+    $VERSION
 }
 
 method BUILD {
@@ -146,6 +146,7 @@ method to_hash (*@args) {
 method add ($name, Sub $block) {
     # TODO add %options support
     #multi method add ($name, %options = (), $block) {
+    Facter.debug("Facter: adding fact $name as " ~ $block.perl);
     my $instance = self // Facter.get_instance;
     $instance.collection.add($name, $block);
 }

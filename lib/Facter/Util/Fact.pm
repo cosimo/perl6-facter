@@ -1,11 +1,6 @@
-use v6;
-
-# FIXME Doesn't work because of search_path already defined
-#use Facter;
-
 class Facter::Util::Fact;
 
-#se Facter::Util::Resolution;
+use Facter::Util::Resolution;
 
 our $TIMEOUT = 5;
 
@@ -34,22 +29,26 @@ method initialize($name, %options = ()) {
 
 # Add a new resolution mechanism.  This requires a block, which will then
 # be evaluated in the context of the new mechanism.
-method add(Sub $block) {
+method add($block) {
 
     #raise ArgumentError, "You must pass a block to Fact<instance>.add" unless block_given?
     if ! $block {
         die "You must pass a block to Fact<instance>.add";
     }
 
-    my $resolve = Facter::Util::Resolution.new($.name);
-    $resolve.instance_eval($block);
+    Facter.debug("Fact.add($.name, $block)");
+    my $resolve = Facter::Util::Resolution.new(name => $.name);
+
+    # ruby: resolve.instance_eval(block);
+    $block($resolve);
+
     @.resolves.push($resolve);
 
     # Immediately sort the resolutions, so that we always have
     # a sorted list for looking up values.
     #  We always want to look them up in the order of number of
     # confines, so the most restricted resolution always wins.
-    #@resolves.sort! { |a, b| b.length <=> a.length }
+    @.resolves = sort { $^b.elems <=> $^a.elems }, @.resolves;
 
     return $resolve;
 }
