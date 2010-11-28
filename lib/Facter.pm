@@ -39,7 +39,7 @@ our $LAST_OBJECT;
 
 # Private members
 has $!collection is rw;
-has $!debug is rw = 0;
+has $!debug is rw = 1;
 has $!timing is rw = 0;
 has @!search_path is rw = ();
 
@@ -74,7 +74,7 @@ method debug($string) {
         return
     }
     if self.debugging() {
-        say $string
+        warn $string ~ "\n"
     }
     return;
 }
