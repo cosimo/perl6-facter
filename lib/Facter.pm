@@ -39,13 +39,13 @@ our $LAST_OBJECT;
 # Static variables (@@debug)
 our $debug = 1;
 our $timing = 0;
+our $collection;
 
 # Private members
-has $!collection is rw;
 has @!search_path is rw = ();
 
 method collection {
-    $!collection //= Facter::Util::Collection.new
+    $collection //= Facter::Util::Collection.new
 }
 
 method version {
@@ -107,7 +107,9 @@ method get_fact($name) {
 }
 
 method fact(*@args) {
-    self.collection.fact(@args);
+    my $fact = self.collection.fact(@args);
+    Facter.debug("Facter.fact returns $fact");
+    return $fact;
 }
 
 method flush(*@args) {
@@ -144,8 +146,6 @@ method to_hash (*@args) {
 # Add a resolution mechanism for a named fact.  This does not distinguish
 # between adding a new fact and adding a new way to resolve a fact.
 method add ($name, Sub $block) {
-    # TODO add %options support
-    #multi method add ($name, %options = (), $block) {
     Facter.debug("Facter: adding fact $name as " ~ $block.perl);
     my $instance = self // Facter.get_instance;
     $instance.collection.add($name, $block);
@@ -180,7 +180,7 @@ method warn ($msg) {
 }
 
 method reset {
-    $!collection = ();
+    $collection = ();
 }
 
 # Load all of the default facts, and then everything from disk.

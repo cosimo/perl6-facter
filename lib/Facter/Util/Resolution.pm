@@ -13,10 +13,11 @@ class Facter::Util::Resolution;
 #equire 'timeout'
 #equire 'rbconfig'
 
+has $!value is rw;
+
 has $.code is rw;
 has $.interpreter is rw;
 has $.name is rw;
-has $!value is rw;
 has $.timeout is rw;
 has @.confines is rw;
 
@@ -133,7 +134,7 @@ method suitable {
     return $.suitable;
 }
 
-method Str {
+method to_s {
     return self.value;
 }
 

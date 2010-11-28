@@ -7,7 +7,7 @@ class Facter::Util::Collection;
 use Facter::Util::Loader;
 
 # Private members
-has %!facts is rw;
+has %!facts is rw = ();
 has $!loader is rw;
 
 # Return a fact object by name.  If you use this, you still have to call
@@ -18,21 +18,22 @@ method get($name) {
 
 # Add a resolution mechanism for a named fact.  This does not distinguish
 # between adding a new fact and adding a new way to resolve a fact.
-method add($fact_name, Sub $block) {
+method add($fact_name, $block) {
 
     # TODO add %options support
     my %options = ();
 
-    Facter.debug("collection.add $fact_name: " ~ $block.perl);
+    Facter.debug("Facter::Util::Collection.add $fact_name: $block");
 
     my $name = self.canonize($fact_name);
 
     my $fact = %!facts{$name};
     unless $fact {
-        Facter.debug("new Fact '$name'");
+        Facter.debug("- new Fact '$name'");
         $fact = Facter::Util::Fact.new(name => $name);
-        Facter.debug("new Fact '$name' created: " ~ $fact.perl);
+        Facter.debug("- new Fact '$name' created: " ~ $fact.perl);
         %!facts{$name} = $fact;
+        Facter.debug('%!facts{$name}' ~ " = '" ~ %!facts{$name});
     }
 
     # Set any fact-appropriate options.
@@ -63,6 +64,7 @@ method add($fact_name, Sub $block) {
         die "Invalid facter option(s) " ~ %options.keys ==> map { $_.Str } ==> join(",");
     }
 
+    Facter.debug("Facter::Util::Collection.add returns \$fact=$fact");
     return $fact;
 }
 
@@ -80,12 +82,13 @@ method each () {
 # Return a fact by name.
 method fact($name) {
     my $fact_name = self.canonize($name);
-    Facter.debug("self.canonize($name) = $fact_name");
 
     unless %!facts{$fact_name} {
-        Facter.debug("Loading fact $fact_name through loader");
+        Facter.debug("Facter::Util::Collection.fact loading fact $fact_name through loader");
         self.loader.load($fact_name);
     }
+
+    Facter.debug("Facter::Util::Collection.fact fact $fact_name: " ~ %!facts{$fact_name});
 
     return %!facts{$fact_name};
 }
