@@ -30,14 +30,14 @@ class Facter;
 use Facter::Util::Fact;
 use Facter::Util::Collection;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 our $LAST_OBJECT;
 
 # TODO: RT#77906
 #%*ENV<LANG> = 'C';
 
 # Static variables (@@debug)
-our $debug = 1;
+our $debug = 0;
 our $timing = 0;
 our $collection;
 
