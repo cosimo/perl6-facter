@@ -14,6 +14,7 @@ class Facter::Util::Resolution;
 #equire 'rbconfig'
 
 has $!value is rw;
+has $!suitable is rw;
 
 has $.code is rw;
 has $.interpreter is rw;
@@ -128,10 +129,10 @@ method setcode($string = "", $interp = "", $block) {
 
 # Is this resolution mechanism suitable on the system in question?
 method suitable {
-    unless defined $.suitable {
-        $.suitable = ! (any(@.confines) == False);
+    unless $!suitable.defined {
+        $!suitable = (any(@.confines) == False) ?? 0 !! 1;
     }
-    return $.suitable;
+    return $!suitable;
 }
 
 method to_s {
