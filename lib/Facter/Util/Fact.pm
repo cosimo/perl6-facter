@@ -76,7 +76,7 @@ method value {
         return;
     }
 
-    self.searching(sub {
+    $!value = self.searching(sub {
 
         Facter.debug("Facter::Util::Fact.value for $!name. Searching.");
 
@@ -141,9 +141,12 @@ method searching (Sub $block) {
 
     Facter.debug("Facter::Util::Fact.searching for $!name: start");
 
-    gather {
+    my @fact-values = gather {
+        #Facter.debug("- Block is " ~ $block.perl);
         my $next-value = $block();
-        Facter.debug("- Got next value: $next-value");
+        #Facter.debug("- 1 Got next value: " ~ $next-value ~ " (" ~ $next-value.perl ~ ")");
+        $next-value = $next-value();
+        #Facter.debug("- 2 Got next value: " ~ $next-value ~ " (" ~ $next-value.perl ~ ")");
         take $next-value;
         $!searching = False;
     };
@@ -154,5 +157,6 @@ method searching (Sub $block) {
     #    @searching = false
     #end;
 
+    return @fact-values;
 }
 
