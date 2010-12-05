@@ -58,16 +58,18 @@ method exec($code, $interpreter = $INTERPRETER) {
     # Windows' %x{} throws Errno::ENOENT when the command is not found, so we 
     # can skip the check there. This is good, since builtins cannot be found 
     # elsewhere.
-    if $HAVE_WHICH and !$WINDOWS {
+    if self.have_which and !$WINDOWS {
         my $path = Mu;
-        my $binary = $.code.split.[0];
-        if $.code ~~ /^\// {
-            $path = $binary
+        my $binary = $code.split(" ").[0];
+        if $code ~~ /^\// {
+            $path = $binary;
         } else {
-            $path = qx{which '$binary' 2>/dev/null}.chomp;
+            Facter.debug("Trying to find which '$binary'");
+            $path = qqx{which '$binary' 2>/dev/null}.chomp;
             # we don't have the binary necessary
             return if $path eq "" or $path.match(/Command not found\./);
         }
+        Facter.debug("path=$path");
         return unless $path.IO ~~ :e;
     }
 
@@ -75,7 +77,7 @@ method exec($code, $interpreter = $INTERPRETER) {
 
     Facter.debug("Running command $code");
     try {
-        $out = qx{$code}.chomp;
+        $out = qqx{$code}.chomp;
     }
     CATCH {
         Facter.debug("Command failed: $!");
