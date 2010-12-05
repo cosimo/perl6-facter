@@ -13,6 +13,8 @@ method load($fact) {
     my $shortname = $fact.Str.lc;
     self.load_env($shortname);
 
+    return self.load_file($shortname);
+
     # TODO: would be cool to also run the ".rb" facts
     my $filename = $shortname ~ ".pm";
     my $module = "Facter::$shortname";
@@ -40,12 +42,16 @@ method load($fact) {
 }
 
 # Load all facts from all directories.
-method load_all () {
-    return if defined $!loaded_all;
+method load_all {
+    return if $!loaded_all;
 
+    Facter.debug("Loading env facts");
     self.load_env();
 
+    Facter.debug("Loading facts from search_path: " ~ self.search_path.perl);
     for self.search_path -> $dir {
+
+        Facter.debug("    - $dir");
 
         next unless $dir.IO ~~ :d;
 
@@ -83,7 +89,7 @@ method search_path {
 method load_dir($dir) {
 
     return if $dir ~~ /\/\.+$/
-        or $dir ~~ /\/util$/
+        or $dir ~~ /\/Util$/
         or $dir ~~ /\/lib$/;
 
     for dir($dir) -> $f {
@@ -94,11 +100,26 @@ method load_dir($dir) {
 }
 
 method load_file($file) {
-    say "require '$file'";
-    eval("require '$file'") or do {
-        warn "Error loading fact $file: $!\n";
+
+    # $file can be 'lib/Facter/kernel.pm'
+    # We need to require 'Facter::kernel'
+    # Only lowercase names!
+    return unless $file ~~ /(<[a..z]>\w*)\.pm$/;
+
+    my $fact-name = $0.Str;
+    my $module-name = "Facter::$fact-name";
+
+    Facter.debug("Fact file name $file triggers load of module $module-name");
+
+    # TODO: would be cool to also run the ".rb" facts
+    try {
+        require $module-name;
+    }
+    CATCH {
+        Facter.debug("Failed loading fact file $file ($module-name)");
         return False;
-    };
+    }
+
     return True;
 }
 
