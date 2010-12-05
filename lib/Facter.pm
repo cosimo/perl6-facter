@@ -75,7 +75,7 @@ method debug($string) {
         return
     }
     if self.debugging {
-        say $string ~ "\n"
+        say $string;
     }
     return;
 }
@@ -133,14 +133,14 @@ method value (*@args) {
 #    });
 #}
 
-method list (*@args) {
+method list {
     self.collection.load_all();
-    self.collection.list(@args);
+    self.collection.list();
 }
 
-method to_hash (*@args) {
+method to_hash {
     self.collection.load_all();
-    self.collection.to_hash(@args);
+    self.collection.to_hash();
 }
 
 # Add a resolution mechanism for a named fact.  This does not distinguish
