@@ -9,6 +9,7 @@ my @name = @*ARGS;
 
 if @name {
     for @name -> $name {
+        # TODO doesn't work... 
         %facts{$name} = $facter.fact($name).value;
     }
 }
