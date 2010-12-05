@@ -14,7 +14,10 @@ has @.values is rw;
 
 # Add the restriction.  Requires the fact name, an operator, and the value
 # we're comparing to.
-method initialize($fact, *@values) {
+method BUILD ($fact, *@values) {
+
+    Facter.debug("Building confine for " ~ $fact ~ " = " ~ @values.perl);
+
     die "The fact name must be provided" unless $fact; # ArgumentError
     die "One or more values must be provided" if @values.elems == 0;
     $.fact = $fact;
@@ -28,21 +31,22 @@ method Str {   # ruby: to_s
 }
 
 # Evaluate the fact, returning true or false.
-method true {
+method Bool {
+
+    Facter.debug("Confine processing: checking truth for fact " ~ $.fact ~ " = " ~ @.values.perl);
 
     unless my $fact = Facter.get_fact($.fact) {
         Facter.debug("No fact for $.fact");
-        return False
+        return False;
     }
 
     my $value = Facter::Util::Values.convert($fact.value);
-
-    return False if ! $value.defined;
+    return False unless $value.defined;
 
     for @.values -> $v {
         $v = Facter::Util::Values.convert($v);
         next unless $v.WHAT == $value.WHAT;    # ruby's .class
-        return True if $value == $v;
+        return True if $value eq $v;
     }
 
     return False

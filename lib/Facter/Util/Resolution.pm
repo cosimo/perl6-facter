@@ -91,8 +91,9 @@ method exec($code, $interpreter = $INTERPRETER) {
 # Add a new confine to the resolution mechanism.
 method confine(%confines) {
     require Facter::Util::Confine;
-    for %confines.kv -> $fact, $values {
-        @.confines.push(Facter::Util::Confine.new($fact, $values));
+    for %confines.kv -> $fact, $value {
+        Facter.debug("Adding confine '$fact' => '$value'");
+        @.confines.push(Facter::Util::Confine.new($fact, $value));
     }
 }
 
