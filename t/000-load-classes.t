@@ -11,5 +11,5 @@ use Facter::Util::Values;
 
 ok(1, 'Facter main classes loaded');
 
-done_testing;
+done;
 
