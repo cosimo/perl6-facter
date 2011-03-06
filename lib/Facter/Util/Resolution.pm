@@ -119,7 +119,7 @@ method limit {
 }
 
 # Set our code for returning a value.
-method setcode($string = "", $interp = "", $block) {
+method setcode($string = "", $interp = "", $block = Mu) {
     if $string {
         $.code = $string;
         $.interpreter = $interp || $INTERPRETER;
