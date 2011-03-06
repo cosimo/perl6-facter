@@ -1,9 +1,11 @@
 #
 # a Perl 6 port of ruby facter
-#
-# http://github.com/puppetlabs/facter/
+# http://github.com/cosimo/perl6-facter/
 #
 
+# Original facter copyright statement:
+# from http://github.com/puppetlabs/facter/
+#
 #--
 # Copyright 2006 Luke Kanies <luke@madstop.com>
 #
@@ -30,7 +32,7 @@ class Facter;
 use Facter::Util::Fact;
 use Facter::Util::Collection;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 our $LAST_OBJECT;
 
 # TODO: RT#77906
