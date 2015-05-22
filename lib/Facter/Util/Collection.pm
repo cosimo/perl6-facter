@@ -7,8 +7,8 @@ class Facter::Util::Collection;
 use Facter::Util::Loader;
 
 # Private members
-has %!facts is rw = ();
-has $!loader is rw;
+has %!facts = ();
+has $!loader;
 
 # Return a fact object by name.  If you use this, you still have to call
 # 'value' on it to retrieve the actual value.
