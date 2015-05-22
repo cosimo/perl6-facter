@@ -27,7 +27,7 @@
 
 use v6;
 
-class Facter;
+unit class Facter;
 
 use Facter::Util::Fact;
 use Facter::Util::Collection;
