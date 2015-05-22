@@ -67,7 +67,7 @@ method exec($code, $interpreter = $INTERPRETER) {
             Facter.debug("Trying to find which '$binary'");
             $path = qqx{which '$binary' 2>/dev/null}.chomp;
             # we don't have the binary necessary
-            return if $path eq "" or $path.match(/Command not found\./);
+            return if $path eq "" or $path.match(/'Command not found.'/);
         }
         Facter.debug("path=$path");
         return unless $path.IO ~~ :e;
