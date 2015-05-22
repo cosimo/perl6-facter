@@ -13,8 +13,8 @@ class Facter::Util::Resolution;
 #equire 'timeout'
 #equire 'rbconfig'
 
-has $!value is rw;
-has $!suitable is rw;
+has $!value;
+has $!suitable;
 
 has $.code is rw;
 has $.interpreter is rw;

@@ -44,7 +44,7 @@ our $timing = 0;
 our $collection;
 
 # Private members
-has @!search_path is rw = ();
+has @!search_path = ();
 
 method collection {
     $collection //= Facter::Util::Collection.new

@@ -4,13 +4,13 @@ use Facter::Util::Resolution;
 
 our $TIMEOUT = 5;
 
-has $!value is rw;
-has $!suitable is rw = False;
+has $!value;
+has $!suitable = False;
 
 has $.name is rw = "";
 has $.ldapname is rw = "";
 has @.resolves is rw = ();
-has $!searching is rw = False;
+has $!searching = False;
 
 # Create a new fact, with no resolution mechanisms.
 method initialize($name, %options = ()) {
