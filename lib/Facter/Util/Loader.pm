@@ -2,7 +2,7 @@
 
 use v6;
 
-class Facter::Util::Loader;
+unit class Facter::Util::Loader;
 
 has $!loaded_all is rw = False;
 

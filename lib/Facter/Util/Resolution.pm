@@ -8,7 +8,7 @@
 # suitable.
 #
 
-class Facter::Util::Resolution;
+unit class Facter::Util::Resolution;
 
 #equire 'timeout'
 #equire 'rbconfig'

@@ -1,6 +1,6 @@
 # Manage which facts exist and how we access them.  Largely just a wrapper
 # around a hash of facts.
-class Facter::Util::Collection;
+unit class Facter::Util::Collection;
 
 #se Facter;
 #se Facter::Util::Fact;

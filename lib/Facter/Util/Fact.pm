@@ -1,4 +1,4 @@
-class Facter::Util::Fact;
+unit class Facter::Util::Fact;
 
 use Facter::Util::Resolution;
 

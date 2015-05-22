@@ -5,7 +5,7 @@
 # for the resolution mechanism to be suitable.
 #
 
-class Facter::Util::Confine;
+unit class Facter::Util::Confine;
 
 use Facter::Util::Values;
 
