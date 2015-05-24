@@ -8,13 +8,13 @@
 # suitable.
 #
 
-class Facter::Util::Resolution;
+unit class Facter::Util::Resolution;
 
 #equire 'timeout'
 #equire 'rbconfig'
 
-has $!value is rw;
-has $!suitable is rw;
+has $!value;
+has $!suitable;
 
 has $.code is rw;
 has $.interpreter is rw;
@@ -67,7 +67,7 @@ method exec($code, $interpreter = $INTERPRETER) {
             Facter.debug("Trying to find which '$binary'");
             $path = qqx{which '$binary' 2>/dev/null}.chomp;
             # we don't have the binary necessary
-            return if $path eq "" or $path.match(/Command not found\./);
+            return if $path eq "" or $path.match(/"Command not found\."/);
         }
         Facter.debug("path=$path");
         return unless $path.IO ~~ :e;
@@ -80,7 +80,7 @@ method exec($code, $interpreter = $INTERPRETER) {
         $out = qqx{$code}.chomp;
     }
     CATCH {
-        Facter.debug("Command failed: $!");
+        Facter.debug("Command failed: $_");
         return;
     }
 

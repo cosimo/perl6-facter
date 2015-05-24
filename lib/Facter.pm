@@ -27,10 +27,13 @@
 
 use v6;
 
-class Facter;
+
+unit class Facter;
 
 use Facter::Util::Fact;
+use Facter::Util::Loader;
 use Facter::Util::Collection;
+
 
 our $VERSION = '0.04';
 our $LAST_OBJECT;
@@ -44,7 +47,7 @@ our $timing = 0;
 our $collection;
 
 # Private members
-has @!search_path is rw = ();
+has @!search_path = ();
 
 method collection {
     $collection //= Facter::Util::Collection.new
@@ -72,7 +75,7 @@ multi method debugging($bit) {
     }
 }
 
-method debug($string) {
+method debug(Str $string) {
     if ! defined $string {
         return
     }
