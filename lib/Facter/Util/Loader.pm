@@ -139,7 +139,7 @@ method load_env($fact = "") {
 
         # If a fact name was specified,
         # skip anything that doesn't match it.
-        next if $fact and $env_name != $fact;
+        next if $fact and $env_name ne $fact;
 
         Facter.add($env_name, $value);
 
