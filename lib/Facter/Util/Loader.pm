@@ -130,10 +130,6 @@ method load_file($file) {
 # Load facts from the environment.  If no name is provided,
 # all will be loaded.
 method load_env($fact = "") {
-
-    # TODO Iterate over %*ENV not possible?
-    return;
-
     # Load from the environment, if possible
     for %*ENV.kv -> $name, $value {
 
