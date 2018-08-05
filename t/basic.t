@@ -28,5 +28,4 @@ is($lsbdistname, $*DISTRO, "test fact has correct value");
 diag("Collection object:" ~ $coll.perl);
 diag("Search dirs:" ~ @search_dirs.perl);
 
-done;
-
+done-testing;

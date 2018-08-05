@@ -11,5 +11,4 @@ ok(%facts, 'Facter.to_hash call produces some result');
 
 is(%facts<perl6os>, $*DISTRO, 'perl6os fact has the correct value');
 
-done;
-
+done-testing;
