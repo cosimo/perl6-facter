@@ -8,5 +8,4 @@ my $uname_res = Facter::Util::Resolution.exec('uname -a');
 diag('uname-res: ' ~ $uname_res);
 ok($uname_res, 'uname -a should result in something');
 
-done;
-
+done-testing;

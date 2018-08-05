@@ -24,7 +24,7 @@ has $.name is rw;
 has $.timeout is rw;
 has @.confines is rw;
 
-our $WINDOWS = $*OS ~~ m:i/mswin|win32|dos|mingw|cygwin/;
+our $WINDOWS = ~$*DISTRO ~~ m:i/mswin|win32|dos|mingw|cygwin/;
 our $INTERPRETER = $WINDOWS ?? 'cmd.exe' !! '/bin/sh';
 our $HAVE_WHICH;
 

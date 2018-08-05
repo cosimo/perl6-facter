@@ -19,7 +19,7 @@ ok($fact.^can("value"), "fact object has a value() method");
 
 my $lsbdistname = $facter.fact($test-fact).value;
 ok($lsbdistname, "fact '$test-fact' is loaded");
-is($lsbdistname, $*OS, "test fact has correct value");
+is($lsbdistname, $*DISTRO, "test fact has correct value");
 
 # Unused for now...
 #@search_dirs = $facter.search_path;
@@ -28,5 +28,4 @@ is($lsbdistname, $*OS, "test fact has correct value");
 diag("Collection object:" ~ $coll.perl);
 diag("Search dirs:" ~ @search_dirs.perl);
 
-done;
-
+done-testing;

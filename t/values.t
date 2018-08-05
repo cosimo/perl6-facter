@@ -15,5 +15,4 @@ for @values -> $test_case, $expected_result {
     );
 }
 
-done;
-
+done-testing;

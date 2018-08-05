@@ -1,19 +1,19 @@
 use v6;
 
 role Facter::Debug {
-    our $debug = 0;
+    has $!debug = 0;
 
     multi method debugging {
-        return $debug != 0
+        return $!debug != 0
     }
 
     # Set debugging on or off (1/0)
     multi method debugging($bit) {
         if $bit {
-            $debug = 1;
+            $!debug = 1;
         }
         else {
-            $debug = 0;
+            $!debug = 0;
         }
     }
 

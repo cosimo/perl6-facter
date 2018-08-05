@@ -130,10 +130,6 @@ method load_file($file) {
 # Load facts from the environment.  If no name is provided,
 # all will be loaded.
 method load_env($fact = "") {
-
-    # TODO Iterate over %*ENV not possible?
-    return;
-
     # Load from the environment, if possible
     for %*ENV.kv -> $name, $value {
 
@@ -143,7 +139,7 @@ method load_env($fact = "") {
 
         # If a fact name was specified,
         # skip anything that doesn't match it.
-        next if $fact and $env_name != $fact;
+        next if $fact and $env_name ne $fact;
 
         Facter.add($env_name, $value);
 
